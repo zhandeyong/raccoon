@@ -12,7 +12,10 @@ import random
 import re
 import time
 import traceback
+import warnings
 
+
+warnings.filterwarnings("ignore")
 
 def check_blank(df, columns, primary=None):
     """
@@ -283,7 +286,7 @@ def save_to_file(file, contents, mode='w', encoding='utf-8'):
     保存到本地文件
     :param file: str, 本地文件名
     :param contents: str, 待保存的对象
-    :param mode: str, 打开文件的模式
+    :param mode: str, 打开文件的模式, 'w'为新建或覆盖, 'a'为新建或追加
     :param encoding: str, 编码方式
     :return: 本地file文件
     """
@@ -476,6 +479,8 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
         return
     if not black:
         black = dict()
+    if not keep_na:
+        keep_na = list()
     # 输出路径准备，用于存放清洗结果
     if path_white:
         if not os.path.exists(path_white):
@@ -548,7 +553,7 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
             df_black = pd.DataFrame()
 
             # 第三层循环，遍历执行相应的清洗规则
-            df_rule_sheet = df_rule_excel[df_rule_excel[primary[1]] == sheet]  # sheet相应的清洗规则表
+            df_rule_sheet = df_rule_excel[df_rule_excel[primary['sheet']] == sheet]  # sheet相应的清洗规则表
             for j in range(len(df_rule_sheet)):
                 # 清洗算法：
                 # 第一步：基于规则black、white参数生成相应的布尔索引，基于keep_na参数对原始数据的na导致的布尔索引中的na进行填充,
