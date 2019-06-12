@@ -456,7 +456,7 @@ def left_fill_value(df, fill, inplace=True):
 
 
 def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inplace=True, fill=None, path_white=None,
-                       path_black=None, show=True, reason=True, default=True):
+                       path_black=None, show=True, reason=True, default=True, sort=None, ascending=True):
     """
     样本清洗筛选函数。基于规则表对相应的本地excel文件中的各个sheet表的数据进行清洗筛选
     :param df: DataFrame, 清洗规则表
@@ -472,6 +472,8 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
     :param show: bool, 是否打印清洗进度
     :param reason: bool, 输出的黑名单是否添加剔除原因
     :param default: bool, 黑白规则均无命中情况时是否默认判定为黑名单
+    :param sort: list(str), 输出黑白名单时的排序字段
+    :param ascending: bool or list of bool, 是否升序
     :return: 清洗完的本地excel文件（黑白名单）
     """
     if not white and not black:
@@ -625,8 +627,12 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
                        count_white, count_black))
 
             if len(df_white) > 0:
+                if sort:
+                    df_white.sort_values(by=sort, inplace=True, ascending=ascending)
                 df_white.to_excel(writer_white, sheet_name=sheet, index=None)
             if len(df_black) > 0:
+                if sort:
+                    df_black.sort_values(by=sort, inplace=True, ascending=ascending)
                 df_black.to_excel(writer_black, sheet_name=sheet, index=None)
         try:
             writer_white.save()
