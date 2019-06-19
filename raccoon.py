@@ -463,7 +463,7 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
     :param path: str, 待清洗筛选的本地excel文件路径
     :param primary: dict('excel': str, 'sheet': str), {'excel': 规则表中相应的列名, 'sheet': 规则表中相应的列名}
     :param white: dict(str: str), {需要执行白规则的sheet列名：规则表中相应的白规则列名}
-    :param black: {str: str}, {需要执行黑规则的sheet列名：规则表中相应的黑规则列名}
+    :param black: dict(str: str), {需要执行黑规则的sheet列名：规则表中相应的黑规则列名}
     :param keep_na: list(str), 取值为空时输出到白名单的列名，如果不在keep_na中，则默认输出到黑名单
     :param inplace: bool, 是否覆盖原始数据。清洗过程中需要对列取值字符化处理，默认字符化结果直接覆盖原始值
     :param fill: dict(str: (int, str)), 字符化填充说明，{需要填充的列名： (最终要填充达到的位数, 用来填充的字符)}
@@ -1097,7 +1097,7 @@ def industry_merchant_clean(file, columns, df_rule, encoding=None, m=20, show=Tr
         return
 
     # 输出路径初始化
-    path_clean = file_path + 'clean/'
+    path_clean = file_path + 'white/'
     path_black = file_path + 'black/'
     if not os.path.exists(path_clean):
         os.mkdir(path_clean)
@@ -1174,12 +1174,12 @@ def industry_merchant_clean(file, columns, df_rule, encoding=None, m=20, show=Tr
             count_black = len(df_black)
             count_unmatch = len(df_chunk)
             if show:
-                print("\t清洗%s，共%d行，其中clean:black:unmatch = %.1f%% : %.1f%% : %.1f%% = %d : %d : %d"
+                print("\t清洗%s，共%d行，其中white:black:unmatch = %.1f%% : %.1f%% : %.1f%% = %d : %d : %d"
                       % (district, count_raw, (100 * count_clean / (count_raw + 0.001)),
                          (100 * count_black / (count_raw + 0.001)),
                          (100 * count_unmatch / (count_raw + 0.001)), count_clean, count_black, count_unmatch))
             if count_clean > 0:
-                df_clean.to_csv(path_clean + file_name + '_' + str(district) + '_clean.txt', mode='a', index=None,
+                df_clean.to_csv(path_clean + file_name + '_' + str(district) + '_white.txt', mode='a', index=None,
                                 header=False)
             if count_black > 0:
                 df_black.to_csv(path_black + file_name + '_' + str(district) + '_black.txt', mode='a', index=None,
