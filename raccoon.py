@@ -455,7 +455,7 @@ def left_fill_value(df, fill, inplace=True):
         return df2
 
 
-def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inplace=True, fill=None, path_white=None,
+def clean_excel_sample(df, path, primary, white, black=None, lower=None, upper=None, keep_na=None, inplace=True, fill=None, path_white=None,
                        path_black=None, show=True, reason=True, default=True, sort=None, ascending=True):
     """
     样本清洗筛选函数。基于规则表对相应的本地excel文件中的各个sheet表的数据进行清洗筛选
@@ -464,8 +464,10 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
     :param primary: dict('excel': str, 'sheet': str), {'excel': 规则表中相应的列名, 'sheet': 规则表中相应的列名}
     :param white: dict(str: str), {需要执行白规则的sheet列名：规则表中相应的白规则列名}
     :param black: dict(str: str), {需要执行黑规则的sheet列名：规则表中相应的黑规则列名}
+    :param lower: list(str), 需要先将取值转成小写再执行清洗的字段名，默认为空
+    :param upper: list(str), 需要先将取值转成大写再执行清洗的字段名，默认为空
     :param keep_na: list(str), 取值为空时输出到白名单的列名，如果不在keep_na中，则默认输出到黑名单
-    :param inplace: bool, 是否覆盖原始数据。清洗过程中需要对列取值字符化处理，默认字符化结果直接覆盖原始值
+    :param inplace: bool, 是否覆盖原始数据。清洗过程中需要对列取值进行字符化处理，默认处理结果直接覆盖原始值
     :param fill: dict(str: (int, str)), 字符化填充说明，{需要填充的列名： (最终要填充达到的位数, 用来填充的字符)}
     :param path_white: str, 白名单输出路径
     :param path_black: str, 黑名单输出路径
@@ -549,6 +551,13 @@ def clean_excel_sample(df, path, primary, white, black=None, keep_na=None, inpla
                     for col in fill.keys():
                         df_raw_str[col] = df_raw_str[col].apply(lambda x: str(x).rjust(fill[col][0], fill[col][1]))
                 df_raw_str = df_raw_str[list(set(list(white.keys()) + list(black.keys())))].astype('object')
+
+            if lower:
+                for col in lower:
+                    df_raw_str[col] = df_raw_str[col].str.lower()
+            if upper:
+                for col in upper:
+                    df_raw_str[col] = df_raw_str[col].str.upper()
 
             # 输出数据表初始化准备
             df_white = pd.DataFrame()
@@ -1217,3 +1226,4 @@ def company_file_rule_check(rule, path):
         print("\n注意！下列Excel文件名与清洗规则表的公司名未匹配上\n", check)
     else:
         print("检查完毕，待清洗的公司文档集合中未发现有公司缺清洗规则")
+
