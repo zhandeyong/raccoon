@@ -455,8 +455,9 @@ def left_fill_value(df, fill, inplace=True):
         return df2
 
 
-def clean_excel_sample(df, path, primary, white, black=None, lower=None, upper=None, keep_na=None, inplace=True, fill=None, path_white=None,
-                       path_black=None, show=True, reason=True, default=True, sort=None, ascending=True):
+def clean_excel_sample(df, path, primary, white, black=None, lower=None, upper=None, dtypes=None, keep_na=None,
+                       inplace=True, fill=None, path_white=None, path_black=None, show=True, reason=True,
+                       default=True, sort=None, ascending=True):
     """
     样本清洗筛选函数。基于规则表对相应的本地excel文件中的各个sheet表的数据进行清洗筛选
     :param df: DataFrame, 清洗规则表
@@ -466,6 +467,7 @@ def clean_excel_sample(df, path, primary, white, black=None, lower=None, upper=N
     :param black: dict(str: str), {需要执行黑规则的sheet列名：规则表中相应的黑规则列名}
     :param lower: list(str), 需要先将取值转成小写再执行清洗的字段名，默认为空
     :param upper: list(str), 需要先将取值转成大写再执行清洗的字段名，默认为空
+    :param dtypes: dict(str: str), 读入excel时各字段的数据类型设置，同read_excle中的dtype
     :param keep_na: list(str), 取值为空时输出到白名单的列名，如果不在keep_na中，则默认输出到黑名单
     :param inplace: bool, 是否覆盖原始数据。清洗过程中需要对列取值进行字符化处理，默认处理结果直接覆盖原始值
     :param fill: dict(str: (int, str)), 字符化填充说明，{需要填充的列名： (最终要填充达到的位数, 用来填充的字符)}
@@ -535,29 +537,33 @@ def clean_excel_sample(df, path, primary, white, black=None, lower=None, upper=N
                 continue
 
             # 读入待清洗的sheet数据
-            df_raw = pd.read_excel(reader_raw, sheet)
+            df_raw = pd.read_excel(reader_raw, sheet, dtype=dtypes)
 
             # 数据预处理
             if inplace:
                 # 对指定的列进行填充补齐，缺失的地方默认仍保持缺失
                 if fill:
                     for col in fill.keys():
-                        df_raw[col] = df_raw[col].apply(lambda x: str(x).rjust(fill[col][0], fill[col][1]))
-                # 提取需要执行清洗规则的列并转成字符型
+                        df_raw[col] = df_raw[col].apply(lambda x: np.nan if str(x) == 'nan' else str(x).rjust(fill[col][0], fill[col][1]))
+                # 提取需要执行清洗规则的列并转成object型
                 df_raw_str = df_raw[list(set(list(white.keys()) + list(black.keys())))].astype('object')
             else:
                 df_raw_str = df_raw.copy()
                 if fill:
                     for col in fill.keys():
-                        df_raw_str[col] = df_raw_str[col].apply(lambda x: str(x).rjust(fill[col][0], fill[col][1]))
+                        df_raw_str[col] = df_raw_str[col].apply(lambda x: np.nan if str(x) == 'nan' else str(x).rjust(fill[col][0], fill[col][1]))
                 df_raw_str = df_raw_str[list(set(list(white.keys()) + list(black.keys())))].astype('object')
 
-            if lower:
-                for col in lower:
-                    df_raw_str[col] = df_raw_str[col].str.lower()
+            if upper and lower:
+                up_low = set(upper) & set(lower)
+                if len(up_low) > 0:
+                    print("\t%s同时出现在大小写转换要求中，将按小写转换处理" % up_low)
             if upper:
                 for col in upper:
                     df_raw_str[col] = df_raw_str[col].str.upper()
+            if lower:
+                for col in lower:
+                    df_raw_str[col] = df_raw_str[col].str.lower()
 
             # 输出数据表初始化准备
             df_white = pd.DataFrame()
@@ -631,7 +637,7 @@ def clean_excel_sample(df, path, primary, white, black=None, lower=None, upper=N
                 count_raw = len(df_raw)
                 count_white = len(df_white)
                 count_black = len(df_black)
-                print("\t%s:共%d行，其中clean:black = %.1f%% : %.1f%% = %d : %d" %
+                print("\t%s:共%d行，其中white:black = %.1f%% : %.1f%% = %d : %d" %
                       (sheet, count_raw, (100*count_white/count_raw), (100*count_black/count_raw),
                        count_white, count_black))
 
